@@ -266,7 +266,7 @@ MonoBehaviour:
   spawnPoint: {fileID: 8153268560216491265}
   laserLine: {fileID: 6264483719586595981}
   laserDuration: 0.05
-  laserRange: 600
+  laserRange: 800
   bulletPrefab: {fileID: 1064477732770105217, guid: a05eead32bba8a144b7c75d39a273532,
     type: 3}
 --- !u!1001 &5090716580680191249

@@ -16,17 +16,22 @@ public class EnemyAgentController : Agent
     private Animator _animator;
     private bool isMoving;
 
+    // Yerçekimi parametreleri
+    private Vector3 velocity;
+    [SerializeField] private float gravity = -9.81f; // Yerçekimi kuvveti
+    [SerializeField] private float groundCheckDistance = 0.1f; // Yere yakınlık kontrolü
+    [SerializeField] private LayerMask groundLayer; // Zemin katmanı
+    private bool isGrounded;
 
     public override void Initialize()
     {
         _animator = GetComponent<Animator>();
         enemyMovement = GetComponent<CharacterController>();
-
     }
 
     public override void OnEpisodeBegin()
     {
-    
+        velocity = Vector3.zero;
     }
 
     public override void CollectObservations(VectorSensor sensor)
@@ -36,17 +41,20 @@ public class EnemyAgentController : Agent
 
     public override void OnActionReceived(ActionBuffers actions)
     {
-      
-
         can_shoot = false;
+
         float move_Rotate = actions.ContinuousActions[0];
         float move_Forward = actions.ContinuousActions[1];
         bool shoot = actions.DiscreteActions[0] > 0;
-        enemyMovement.Move(transform.forward * (move_Forward * moveSpeed * Time.deltaTime));
-        enemyMovement.transform.Rotate(0f, move_Rotate, 0f, Space.Self);
 
-    
+        // Hareket
+        Vector3 moveDirection = transform.forward * (move_Forward * moveSpeed * Time.deltaTime);
+        enemyMovement.Move(moveDirection);
 
+        // Dönüş
+        transform.Rotate(0f, move_Rotate, 0f, Space.Self);
+
+        // Ateş Etme
         if (shoot && !has_shot)
         {
             can_shoot = true;
@@ -80,8 +88,6 @@ public class EnemyAgentController : Agent
 
     private void FixedUpdate()
     {
-        
-
         if (has_shot)
         {
             time_until_next_bullet--;
@@ -90,6 +96,18 @@ public class EnemyAgentController : Agent
                 has_shot = false;
             }
         }
+
+        // Yere temas kontrolü
+        isGrounded = Physics.CheckSphere(transform.position, groundCheckDistance, groundLayer);
+
+        if (isGrounded && velocity.y < 0)
+        {
+            velocity.y = -2f; // Zemin üzerinde sabit kalması için hafif bir negatif değer
+        }
+
+        // Yerçekimi uygulama
+        velocity.y += gravity * Time.fixedDeltaTime;
+        enemyMovement.Move(velocity * Time.fixedDeltaTime);
     }
 
     private void Update()
@@ -102,14 +120,10 @@ public class EnemyAgentController : Agent
         {
             isMoving = false;
         }
-
-     
     }
 
     private void OnControllerColliderHit(ControllerColliderHit hit)
     {
-        
-
         if (hit.collider.CompareTag("Wall"))
         {
             AddReward(-15f);
@@ -124,8 +138,4 @@ public class EnemyAgentController : Agent
     {
         _animator.SetBool("canMove", isMoving);
     }
-
-
-
-    
 }
